@@ -16,13 +16,13 @@ body {
   overflow-x: hidden;
 }
 
-/* ===== Анимация ₽ ===== */
+/* ===== Canvas анимации ===== */
 #animationCanvas {
   position:fixed;
   top:0; left:0;
   width:100%; height:100%;
   z-index:9999;
-  background: linear-gradient(120deg, #111 0%, #222 100%);
+  background: linear-gradient(120deg,#111 0%,#222 100%);
 }
 
 /* ===== Жидкое стекло ===== */
@@ -31,16 +31,13 @@ body {
   border-radius: 30px;
   padding: 20px;
   margin-bottom: 20px;
-  box-shadow: 0 15px 35px rgba(0,0,0,0.06), 0 8px 18px rgba(0,0,0,0.04);
+  box-shadow: 0 15px 35px rgba(0,0,0,0.06),0 8px 18px rgba(0,0,0,0.04);
   backdrop-filter: blur(25px);
   -webkit-backdrop-filter: blur(25px);
   border: 1px solid rgba(255,255,255,0.25);
-  transition: transform 0.3s, box-shadow 0.3s, background 0.3s;
+  transition: transform 0.3s,box-shadow 0.3s,background 0.3s;
 }
-.card:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 25px 50px rgba(0,0,0,0.1), 0 15px 30px rgba(0,0,0,0.07);
-}
+.card:hover { transform:translateY(-5px); box-shadow:0 25px 50px rgba(0,0,0,0.1),0 15px 30px rgba(0,0,0,0.07); }
 
 label { display:block;font-weight:600;margin-top:10px;color:#555;font-size:16px; }
 input, select {
@@ -53,29 +50,14 @@ input::placeholder{color: rgba(0,0,0,0.4);}
 
 /* ===== Кнопки ===== */
 button {
-  width:100%;
-  padding:16px;
-  margin-top:16px;
-  font-size:18px;
-  font-weight:bold;
-  color:#fff;
+  width:100%; padding:16px; margin-top:16px;
+  font-size:18px; font-weight:bold; color:#fff;
   background: linear-gradient(135deg, rgba(76,175,80,0.7), rgba(56,142,60,0.7));
-  border:none;
-  border-radius:20px;
-  cursor:pointer;
-  backdrop-filter: blur(15px);
-  transition: transform 0.2s, box-shadow 0.2s, background 0.2s;
+  border:none; border-radius:20px; cursor:pointer;
+  backdrop-filter: blur(15px); transition: transform 0.2s, box-shadow 0.2s, background 0.2s;
 }
-button:hover {
-  transform: translateY(-3px);
-  background: linear-gradient(135deg, rgba(76,175,80,0.85), rgba(56,142,60,0.85));
-  box-shadow: 0 10px 25px rgba(0,0,0,0.1);
-}
-button:active {
-  transform: translateY(0);
-  background: linear-gradient(135deg, rgba(56,142,60,0.85), rgba(76,175,80,0.85));
-  box-shadow: 0 4px 10px rgba(0,0,0,0.05);
-}
+button:hover { transform:translateY(-3px); background: linear-gradient(135deg, rgba(76,175,80,0.85), rgba(56,142,60,0.85)); box-shadow:0 10px 25px rgba(0,0,0,0.1); }
+button:active { transform:translateY(0); background: linear-gradient(135deg, rgba(56,142,60,0.85), rgba(76,175,80,0.85)); box-shadow:0 4px 10px rgba(0,0,0,0.05); }
 .delete-day-btn { background: rgba(255,0,0,0.6); }
 .delete-day-btn:hover { background: rgba(255,0,0,0.8); }
 
@@ -85,10 +67,7 @@ button:active {
   padding:8px 0; border-bottom:1px solid rgba(255,255,255,0.2); margin-bottom:6px;
 }
 .debt-item span { font-weight:600; font-size:15px; }
-.edit-btn,.delete-btn {
-  margin-top:6px; cursor:pointer; padding:6px 10px;
-  border:none;border-radius:12px;color:#fff;font-size:14px; backdrop-filter: blur(6px);
-}
+.edit-btn,.delete-btn { margin-top:6px; cursor:pointer; padding:6px 10px; border:none;border-radius:12px;color:#fff;font-size:14px; backdrop-filter: blur(6px); }
 .edit-btn { background: rgba(0,123,255,0.6); }
 .edit-btn:hover { background: rgba(0,123,255,0.8); }
 .delete-btn { background: rgba(255,0,0,0.6); }
@@ -96,10 +75,7 @@ button:active {
 
 /* ===== Навигация ===== */
 nav { display:flex; justify-content:space-around; margin-bottom:12px; position:relative; z-index:1; }
-nav button {
-  width:auto; padding:10px 20px; background: rgba(255,255,255,0.2); border-radius:14px;
-  font-size:16px; backdrop-filter: blur(6px); transition:0.2s;
-}
+nav button { width:auto; padding:10px 20px; background: rgba(255,255,255,0.2); border-radius:14px; font-size:16px; backdrop-filter: blur(6px); transition:0.2s; }
 nav button.active { background: rgba(255,255,255,0.35); }
 
 /* ===== Результаты ===== */
@@ -108,10 +84,7 @@ nav button.active { background: rgba(255,255,255,0.35); }
 
 .page { position: relative; z-index:1; }
 
-@media(max-width:400px){
-  .debt-item{font-size:14px;}
-  .edit-btn,.delete-btn{padding:5px 8px;font-size:13px;}
-}
+@media(max-width:400px){ .debt-item{font-size:14px;} .edit-btn,.delete-btn{padding:5px 8px;font-size:13px;} }
 </style>
 </head>
 <body>
@@ -166,18 +139,14 @@ nav button.active { background: rgba(255,255,255,0.35); }
   <div class="card">
     <label>Сумма на жизнь за месяц (₽)</label>
     <input type="number" id="life-month" placeholder="Например, 25000" value="25000">
-
     <label>Цвет фона</label>
     <input type="color" id="bg-color" value="#e0e5ec">
-
     <label>Цвет кнопок</label>
     <input type="color" id="btn-color" value="#4caf50">
-
     <label>Выбрать фото для фона</label>
     <input type="file" id="bg-image" accept="image/*">
     <button onclick="applyBackgroundImage()">Применить фон</button>
     <button onclick="removeBackgroundImage()" style="background:rgba(255,0,0,0.6)">Удалить фон</button>
-
     <button onclick="saveSettings()">Сохранить настройки</button>
   </div>
 </div>
@@ -210,7 +179,6 @@ function saveSettings(){
   alert("Настройки сохранены!");
 }
 
-// ==== Фон ====
 function applyBackgroundFromSettings(){
   if(settings.bgImage){
     document.body.style.backgroundImage = `url(${settings.bgImage})`;
@@ -221,6 +189,7 @@ function applyBackgroundFromSettings(){
     document.body.style.background = settings.bgColor;
   }
 }
+
 function applyBackgroundImage(){
   const fileInput = document.getElementById('bg-image');
   if(fileInput.files && fileInput.files[0]){
@@ -274,16 +243,8 @@ function editDebt(i){
 }
 
 // ==== Главная ====
-function daysLeftInMonth(){
-  const today=new Date(); 
-  const lastDay=new Date(today.getFullYear(),today.getMonth()+1,0);
-  return lastDay.getDate()-today.getDate()+1;
-}
-function getLifePerDay(){
-  const today = new Date();
-  const daysInMonth = new Date(today.getFullYear(), today.getMonth()+1, 0).getDate();
-  return settings.lifeMonth / daysInMonth;
-}
+function daysLeftInMonth(){ const today=new Date(); const lastDay=new Date(today.getFullYear(),today.getMonth()+1,0); return lastDay.getDate()-today.getDate()+1; }
+function getLifePerDay(){ const today=new Date(); const daysInMonth = new Date(today.getFullYear(), today.getMonth()+1, 0).getDate(); return settings.lifeMonth / daysInMonth; }
 
 function saveDay(){
   const income=Number(document.getElementById('income').value); 
@@ -349,20 +310,8 @@ function renderChart(){
     ]},
     options:{
       responsive:true,
-      plugins:{
-        legend:{position:'top'},
-        tooltip:{
-          mode:'index',
-          intersect:false,
-          callbacks:{
-            label:function(context){
-              let value = context.raw;
-              return context.dataset.label + ': ' + Math.round(value) + ' ₽';
-            }
-          }
-        }
-      },
-      scales:{x:{stacked:true}, y:{stacked:true, beginAtZero:true, ticks:{callback:function(value){ return value + ' ₽'; }}}}
+      plugins:{legend:{position:'top'}},
+      scales:{x:{stacked:true}, y:{stacked:true, beginAtZero:true}}
     }
   });
 }
@@ -371,117 +320,97 @@ function renderChart(){
 function setToday(){ document.getElementById('today-date').innerText = new Date().toLocaleDateString(); }
 setToday();
 
-// ==== Анимация ₽ из монеток с формой символа ₽ ====
+// ==== Анимация подбрасываемых монет ₽ ====
 function startAnimation(){
   const canvas=document.getElementById('animationCanvas');
   const ctx=canvas.getContext('2d');
   canvas.width=window.innerWidth;
   canvas.height=window.innerHeight;
-  const centerX=canvas.width/2;
-  const centerY=canvas.height/2;
 
-  // временный canvas для контура ₽
-  const textCanvas=document.createElement('canvas');
-  textCanvas.width=canvas.width;
-  textCanvas.height=canvas.height;
-  const tctx=textCanvas.getContext('2d');
-  const fontSize=Math.min(canvas.width,canvas.height)/2;
-  tctx.font=`${fontSize}px Arial`;
-  tctx.textAlign='center';
-  tctx.textBaseline='middle';
-tctx.strokeStyle='white';
-tctx.lineWidth=3;
-tctx.strokeText('₽', centerX, centerY);
-
-// получаем точки контура символа ₽
-const imageData = tctx.getImageData(0,0,canvas.width,canvas.height).data;
-const points=[];
-for(let y=0; y<canvas.height; y+=4){
-  for(let x=0; x<canvas.width; x+=4){
-    const idx=(y*canvas.width + x)*4;
-    if(imageData[idx+3]>128){ // если пиксель непрозрачный
-      points.push({x,y});
+  class Coin{
+    constructor(x){
+      this.x=x;
+      this.y=canvas.height+20;
+      this.vy=-Math.random()*15-10; // вверх
+      this.g=0.5; // гравитация
+      this.angle=0;
+      this.vAngle=Math.random()*0.3+0.2;
+      this.radius=20+Math.random()*10;
+      this.land=false;
     }
-  }
-}
-
-// создаем частицы
-const particleCount = 300;
-const particles = [];
-for(let i=0;i<particleCount;i++){
-  const target = points[Math.floor(Math.random()*points.length)];
-  particles.push({
-    x: Math.random()*canvas.width,
-    y: Math.random()*canvas.height,
-    targetX: target.x,
-    targetY: target.y,
-    vx:0,
-    vy:0,
-    radius: Math.random()*5 + 2
-  });
-}
-
-let startTime=null;
-const duration=5000; // 5 секунд
-
-function animate(timestamp){
-  if(!startTime) startTime=timestamp;
-  const progress=Math.min((timestamp-startTime)/duration,1);
-  ctx.clearRect(0,0,canvas.width,canvas.height);
-
-  // рисуем монетки
-  particles.forEach(p=>{
-    p.vx += (p.targetX - p.x)*0.05;
-    p.vy += (p.targetY - p.y)*0.05;
-    p.vx *= 0.85;
-    p.vy *= 0.85;
-    p.x += p.vx*progress;
-    p.y += p.vy*progress;
-
-    const grad=ctx.createRadialGradient(p.x,p.y,p.radius/4,p.x,p.y,p.radius);
-    grad.addColorStop(0,'rgba(255,255,200,1)');
-    grad.addColorStop(0.5,'rgba(255,215,0,0.9)');
-    grad.addColorStop(1,'rgba(255,165,0,0.6)');
-    ctx.fillStyle=grad;
-    ctx.beginPath();
-    ctx.arc(p.x,p.y,p.radius,0,2*Math.PI);
-    ctx.fill();
-  });
-
-  // соединяем линии между близкими монетками
-  for(let i=0;i<particles.length;i++){
-    for(let j=i+1;j<particles.length;j++){
-      const dx=particles[i].x-particles[j].x;
-      const dy=particles[i].y-particles[j].y;
-      const dist=Math.sqrt(dx*dx+dy*dy);
-      if(dist<30){
-        ctx.strokeStyle='rgba(255,215,0,0.2)';
-        ctx.lineWidth=1;
-        ctx.beginPath();
-        ctx.moveTo(particles[i].x,particles[i].y);
-        ctx.lineTo(particles[j].x,particles[j].y);
-        ctx.stroke();
+    update(){
+      if(!this.land){
+        this.y+=this.vy;
+        this.vy+=this.g;
+        this.angle+=this.vAngle;
+        if(this.y >= canvas.height-50){ // приземление
+          this.y = canvas.height-50;
+          this.vy = 0;
+          this.land = true;
+          this.vAngle = 0;
+        }
       }
     }
+    draw(ctx){
+      ctx.save();
+      ctx.translate(this.x,this.y);
+      ctx.rotate(this.angle);
+      ctx      // Рисуем "монету" как круг с видимой стороной
+      ctx.beginPath();
+      ctx.arc(0,0,this.radius,0,2*Math.PI);
+      ctx.fillStyle = 'gold';
+      ctx.fill();
+      ctx.lineWidth = 2;
+      ctx.strokeStyle = 'darkgoldenrod';
+      ctx.stroke();
+
+      // Символ ₽ на монете
+      ctx.fillStyle = 'black';
+      ctx.font = `${this.radius}px Arial`;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText('₽',0,0);
+
+      ctx.restore();
+    }
   }
 
-  if(progress<1){
+  const coins = [];
+  const spawnInterval = 300; // каждые 300мс новая монетка
+  let lastSpawn = 0;
+
+  function animate(time){
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+
+    // спавн монет
+    if(!lastSpawn) lastSpawn=time;
+    if(time - lastSpawn > spawnInterval){
+      coins.push(new Coin(Math.random()*(canvas.width-100)+50));
+      lastSpawn = time;
+    }
+
+    coins.forEach(c => {
+      c.update();
+      c.draw(ctx);
+    });
+
     requestAnimationFrame(animate);
-  } else {
+  }
+
+  requestAnimationFrame(animate);
+
+  // через 5 секунд скрываем анимацию и показываем основной интерфейс
+  setTimeout(()=>{
     canvas.style.display='none';
     document.querySelectorAll('.page').forEach(p=>p.style.display='block');
-  }
+  },5000);
 }
 
-requestAnimationFrame(animate);
-}
-
-// ==== Инициализация после загрузки DOM ====
+// ==== Инициализация ====
 document.addEventListener('DOMContentLoaded',()=>{
   document.querySelectorAll('.page').forEach(p=>p.style.display='none');
   applyBackgroundFromSettings();
   startAnimation();
-  setToday();
   renderDebts();
   renderToday();
   renderChart();
