@@ -6,7 +6,6 @@
 <title>Финансовый трекер</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <style>
-/* ===== Общие стили ===== */
 body {
   font-family: -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;
   margin:0; padding:12px;
@@ -135,11 +134,11 @@ nav button.active { background: rgba(255,255,255,0.35); }
 <div id="settings" class="page" style="display:none;">
   <div class="card">
     <label>Сумма на жизнь за месяц (₽)</label>
-    <input type="number" id="life-month" placeholder="Например, 25000">
-    <label>Цвет фона (CSS)</label>
-    <input type="text" id="bg-color" placeholder="#e0e5ec">
-    <label>Цвет кнопок (CSS)</label>
-    <input type="text" id="btn-color" placeholder="linear-gradient(135deg, rgba(76,175,80,0.7), rgba(56,142,60,0.7))">
+    <input type="number" id="life-month" placeholder="Например, 25000" value="25000">
+    <label>Цвет фона</label>
+    <input type="color" id="bg-color" value="#e0e5ec">
+    <label>Цвет кнопок</label>
+    <input type="color" id="btn-color" value="#4caf50">
     <button onclick="saveSettings()">Сохранить настройки</button>
   </div>
 </div>
@@ -153,14 +152,14 @@ function showPage(id){
   document.getElementById('btn-'+id).classList.add('active');
 }
 
-// ===== Настройка даты =====
+// ===== Дата =====
 function setToday(){ document.getElementById('today-date').innerText = new Date().toLocaleDateString(); }
 setToday();
 
 // ===== LocalStorage =====
 let debts = JSON.parse(localStorage.getItem('debts'))||[];
 let todayData = JSON.parse(localStorage.getItem('todayData'))||[];
-let settings = JSON.parse(localStorage.getItem('settings'))||{lifeMonth:25000,bgColor:'#e0e5ec',btnColor:'linear-gradient(135deg, rgba(76,175,80,0.7), rgba(56,142,60,0.7))'};
+let settings = JSON.parse(localStorage.getItem('settings'))||{lifeMonth:25000,bgColor:'#e0e5ec',btnColor:'#4caf50'};
 
 // ===== Настройки =====
 function saveSettings(){
@@ -214,13 +213,19 @@ function editDebt(i){
 
 // ===== Главная =====
 function daysLeftInMonth(){
-  const today=new Date(); const lastDay=new Date(today.getFullYear(),today.getMonth()+1,0);
+  const today=new Date(); 
+  const lastDay=new Date(today.getFullYear(),today.getMonth()+1,0);
   return lastDay.getDate()-today.getDate()+1;
+}
+function getLifePerDay(){
+  const today = new Date();
+  const daysInMonth = new Date(today.getFullYear(), today.getMonth()+1, 0).getDate();
+  return Math.round(settings.lifeMonth / daysInMonth);
 }
 
 function saveDay(){
   const income=Number(document.getElementById('income').value); if(!income||income<0) return alert("Введите доход!");
-  const lifeDay=Math.round(settings.lifeMonth/ new Date().getDate() ? new Date().getMonth()+1 : 30); // потом скорректируем
+  const lifeDay=getLifePerDay();
   const debtSum = debts.reduce((a,d)=>a+Number(d.monthly),0);
   const leftDays = daysLeftInMonth();
   const dailyDebt=Math.round(debtSum/leftDays);
