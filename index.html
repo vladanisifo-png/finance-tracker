@@ -4,383 +4,272 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Финансовый трекер</title>
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <style>
-body {
-  font-family: -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;
-  margin:0; padding:12px;
-  color:#333;
-  transition: background 0.3s;
-  background-size: cover;
-  background-position: center;
-  overflow-x: hidden;
-}
-
-#animationCanvas {
-  position:fixed;
-  top:0; left:0;
-  width:100%; height:100%;
-  z-index:9999;
-  background: linear-gradient(120deg,#111 0%,#222 100%);
-}
-
-.card {
-  background: rgba(255,255,255,0.2);
-  border-radius: 30px;
-  padding: 20px;
-  margin-bottom: 20px;
-  box-shadow: 0 15px 35px rgba(0,0,0,0.06),0 8px 18px rgba(0,0,0,0.04);
-  backdrop-filter: blur(25px);
-  -webkit-backdrop-filter: blur(25px);
-  border: 1px solid rgba(255,255,255,0.25);
-  transition: transform 0.3s,box-shadow 0.3s,background 0.3s;
-}
-.card:hover { transform:translateY(-5px); box-shadow:0 25px 50px rgba(0,0,0,0.1),0 15px 30px rgba(0,0,0,0.07); }
-
-label { display:block;font-weight:600;margin-top:10px;color:#555;font-size:16px; }
-input, select {
-  width:100%; padding:12px; margin-top:6px;
-  border-radius:16px; border:1px solid rgba(255,255,255,0.3);
-  background: rgba(255,255,255,0.15); color:#333; font-size:16px;
-  box-sizing:border-box; backdrop-filter: blur(4px);
-}
-input::placeholder{color: rgba(0,0,0,0.4);}
-
-button {
-  width:100%; padding:16px; margin-top:16px;
-  font-size:18px; font-weight:bold; color:#fff;
-  background: linear-gradient(135deg, rgba(76,175,80,0.7), rgba(56,142,60,0.7));
-  border:none; border-radius:20px; cursor:pointer;
-  backdrop-filter: blur(15px); transition: transform 0.2s, box-shadow 0.2s, background 0.2s;
-}
-button:hover { transform:translateY(-3px); background: linear-gradient(135deg, rgba(76,175,80,0.85), rgba(56,142,60,0.85)); box-shadow:0 10px 25px rgba(0,0,0,0.1); }
-button:active { transform:translateY(0); background: linear-gradient(135deg, rgba(56,142,60,0.85), rgba(76,175,80,0.85)); box-shadow:0 4px 10px rgba(0,0,0,0.05); }
-.delete-day-btn { background: rgba(255,0,0,0.6); }
-.delete-day-btn:hover { background: rgba(255,0,0,0.8); }
-
-nav { display:flex; justify-content:space-around; margin-bottom:12px; position:relative; z-index:1; }
-nav button { width:auto; padding:10px 20px; background: rgba(255,255,255,0.2); border-radius:14px; font-size:16px; backdrop-filter: blur(6px); transition:0.2s; }
-nav button.active { background: rgba(255,255,255,0.35); }
-
-.result span.savings { color:#007BFF;font-weight:600; }
-.result span.life { color:#FFC107;font-weight:600; }
-
-.page { position: relative; z-index:1; }
-
-@media(max-width:400px){ .edit-btn,.delete-btn{padding:5px 8px;font-size:13px;} }
+body, html { margin:0; padding:0; width:100%; height:100%; overflow:hidden; font-family: Arial, sans-serif; background: linear-gradient(120deg,#111 0%,#222 100%);}
+canvas { display:block; position:absolute; top:0; left:0; z-index:1000; }
+.container { display:none; padding:20px; color:white; }
+.card { backdrop-filter: blur(12px); background: rgba(255,255,255,0.05); border-radius:15px; padding:15px; margin-bottom:15px; }
+button { backdrop-filter: blur(12px); background: rgba(255,255,255,0.05); border:none; border-radius:12px; padding:10px 20px; color:white; cursor:pointer; font-weight:bold; margin:5px; }
+button:hover { background: rgba(255,255,255,0.15); }
+input { padding:5px; border-radius:8px; border:none; width:100px; margin-right:10px; }
+nav { display:flex; justify-content:center; margin-bottom:15px; }
 </style>
 </head>
 <body>
+<canvas id="canvas"></canvas>
 
-<canvas id="animationCanvas"></canvas>
+<div class="container" id="app">
+  <nav>
+    <button onclick="showPage('main')">Главная</button>
+    <button onclick="showPage('debts')">Долги</button>
+    <button onclick="showPage('settings')">Настройки</button>
+  </nav>
 
-<nav>
-  <button id="btn-home" class="active" onclick="showPage('home')">Сегодня</button>
-  <button id="btn-debts" onclick="showPage('debts')">Долги</button>
-  <button id="btn-settings" onclick="showPage('settings')">Настройки</button>
-</nav>
+  <!-- Главная -->
+  <div id="mainPage">
+    <div class="card">
+      <h3>Сегодняшний заработок</h3>
+      <input type="number" id="todayIncome" placeholder="Сумма">
+      <button onclick="addIncome()">Добавить</button>
+      <button onclick="deleteToday()">Удалить</button>
+    </div>
+    <div class="card">
+      <h3>Информация</h3>
+      <p>Сумма на жизнь сегодня: <span id="lifeToday">0</span>₽</p>
+      <p>Сумма обязательного платежа сегодня: <span id="debtToday">0</span>₽</p>
+      <p>Сумма на накопления: <span id="saveToday">0</span>₽</p>
+    </div>
+  </div>
 
-<div id="home" class="page">
-  <h1>Сегодня: <span id="today-date"></span></h1>
-  <div class="card">
-    <label for="income">Заработал сегодня (₽)</label>
-    <input type="number" id="income" placeholder="Например, 3500">
-    <button onclick="saveDay()">Сохранить день</button>
-    <button class="delete-day-btn" onclick="deleteTodayData()">Удалить последний день</button>
+  <!-- Долги -->
+  <div id="debtsPage" style="display:none;">
+    <div class="card">
+      <h3>Добавить долг</h3>
+      <input type="text" id="debtName" placeholder="Название">
+      <input type="number" id="debtAmount" placeholder="Сумма">
+      <button onclick="addDebt()">Добавить</button>
+    </div>
+    <div class="card" id="debtsList"></div>
   </div>
-  <div class="card">
-    <h2>Результат</h2>
-    <div class="result" id="output">Введите данные и нажмите «Сохранить день».</div>
-  </div>
-  <div class="card">
-    <h2>График доходов</h2>
-    <canvas id="incomeChart" style="width:100%;height:220px;"></canvas>
-  </div>
-</div>
 
-<div id="debts" class="page">
-  <div class="card">
-    <label>Название долга</label>
-    <input type="text" id="debt-name" placeholder="Например, Кредит">
-    <label>Общая сумма долга (₽)</label>
-    <input type="number" id="debt-total" placeholder="50000">
-    <label>Ежемесячный платёж (₽)</label>
-    <input type="number" id="debt-monthly" placeholder="5000">
-    <button onclick="addDebt()">Добавить долг</button>
-  </div>
-  <div class="card">
-    <h2>Список долгов</h2>
-    <div id="debts-list"></div>
-    <div style="margin-top:10px;font-weight:bold;">Сумма всех ежемесячных платежей: <span id="debts-total">0 ₽</span></div>
-  </div>
-</div>
-
-<div id="settings" class="page">
-  <div class="card">
-    <label>Сумма на жизнь за месяц (₽)</label>
-    <input type="number" id="life-month" placeholder="Например, 25000" value="25000">
-    <label>Цвет фона</label>
-    <input type="color" id="bg-color" value="#e0e5ec">
-    <label>Цвет кнопок</label>
-    <input type="color" id="btn-color" value="#4caf50">
-    <label>Выбрать фото для фона</label>
-    <input type="file" id="bg-image" accept="image/*">
-    <button onclick="applyBackgroundImage()">Применить фон</button>
-    <button onclick="removeBackgroundImage()" style="background:rgba(255,0,0,0.6)">Удалить фон</button>
-    <button onclick="saveSettings()">Сохранить настройки</button>
+  <!-- Настройки -->
+  <div id="settingsPage" style="display:none;">
+    <div class="card">
+      <h3>Настройки</h3>
+      <label>Цвет фона: <input type="color" id="bgColor" onchange="updateSettings()"></label>
+      <label>Цвет кнопок: <input type="color" id="btnColor" onchange="updateSettings()"></label>
+    </div>
   </div>
 </div>
 
 <script>
-// ==== Навигация ====
-function showPage(id){
-  document.querySelectorAll('.page').forEach(p=>p.style.display='none');
-  document.getElementById(id).style.display='block';
-  document.querySelectorAll('nav button').forEach(b=>b.classList.remove('active'));
-  document.getElementById('btn-'+id).classList.add('active');
-}
+// ------------------- Анимация ₽ -------------------
+const canvas = document.getElementById('canvas');
+const ctx = canvas.getContext('2d');
+canvas.width = window.innerWidth;
+canvas.height = window.innerHeight;
 
-// ==== LocalStorage ====
-let debts = JSON.parse(localStorage.getItem('debts'))||[];
-let todayData = JSON.parse(localStorage.getItem('todayData'))||[];
-let settings = JSON.parse(localStorage.getItem('settings'))||{lifeMonth:25000,bgColor:'#e0e5ec',btnColor:'#4caf50',savePercent:0.3,bgImage:null};
+const centerX = canvas.width/2;
+const centerY = canvas.height/2;
 
-// ==== Настройки ====
-function saveSettings(){
-  const life = Number(document.getElementById('life-month').value);
-  const bg = document.getElementById('bg-color').value;
-  const btn = document.getElementById('btn-color').value;
-  if(life>0) settings.lifeMonth=life;
-  if(bg) settings.bgColor=bg;
-  if(btn) settings.btnColor=btn;
-  localStorage.setItem('settings',JSON.stringify(settings));
-  applyBackgroundFromSettings();
-  document.querySelectorAll('button').forEach(b=>b.style.background=settings.btnColor);
-  alert("Настройки сохранены!");
-}
-function applyBackgroundFromSettings(){
-  if(settings.bgImage){
-    document.body.style.backgroundImage = `url(${settings.bgImage})`;
-    document.body.style.backgroundSize = "cover";
-    document.body.style.backgroundPosition = "center";
-  } else {
-    document.body.style.backgroundImage = "";
-    document.body.style.background = settings.bgColor;
-  }
-}
-function applyBackgroundImage(){
-  const fileInput = document.getElementById('bg-image');
-  if(fileInput.files && fileInput.files[0]){
-    const reader = new FileReader();
-    reader.onload = function(e){
-      settings.bgImage = e.target.result;
-      localStorage.setItem('settings',JSON.stringify(settings));
-      applyBackgroundFromSettings();
+// Символ ₽ для точек
+const tempCanvas = document.createElement('canvas');
+tempCanvas.width = canvas.width;
+tempCanvas.height = canvas.height;
+const tctx = tempCanvas.getContext('2d');
+const fontSize = Math.min(canvas.width, canvas.height)/2;
+tctx.font = `${fontSize}px Arial`;
+tctx.textAlign = "center";
+tctx.textBaseline = "middle";
+tctx.fillText('₽', centerX, centerY);
+
+const imageData = tctx.getImageData(0,0,canvas.width,canvas.height).data;
+const points = [];
+for(let y=0; y<canvas.height; y+=6){
+  for(let x=0; x<canvas.width; x+=6){
+    const idx = (y*canvas.width + x)*4;
+    if(imageData[idx+3]>128){
+      points.push({x,y});
     }
-    reader.readAsDataURL(fileInput.files[0]);
-  }
-}
-function removeBackgroundImage(){
-  if(confirm("Вы уверены, что хотите удалить фон?")){
-    settings.bgImage = null;
-    localStorage.setItem('settings',JSON.stringify(settings));
-    applyBackgroundFromSettings();
   }
 }
 
-// ==== Долги ====
-function saveDebts(){ localStorage.setItem('debts',JSON.stringify(debts)); }
-function renderDebts(){
-  const list = document.getElementById('debts-list'); list.innerHTML=''; let total=0;
-  debts.forEach((d,i)=>{
-    total+=Number(d.monthly);
-    const div = document.createElement('div'); div.className='debt-item';
-    div.innerHTML=`<span>${d.name}: Общая сумма ${d.total} ₽, Месячный платёж ${d.monthly} ₽</span>
-      <div><button class="edit-btn" onclick="editDebt(${i})">✏️</button>
-      <button class="delete-btn" onclick="deleteDebt(${i})">🗑️</button></div>`;
-    list.appendChild(div);
-  });
-  document.getElementById('debts-total').innerText=total+' ₽';
-}
-function addDebt(){
-  const name=document.getElementById('debt-name').value;
-  const total=Number(document.getElementById('debt-total').value);
-  const monthly=Number(document.getElementById('debt-monthly').value);
-  if(!name||!total||!monthly) return alert("Заполните все поля!");
-  debts.push({name,total,monthly});
-  saveDebts(); renderDebts();
-  document.getElementById('debt-name').value=''; document.getElementById('debt-total').value=''; document.getElementById('debt-monthly').value='';
-}
-function deleteDebt(i){ debts.splice(i,1); saveDebts(); renderDebts(); }
-function editDebt(i){
-  const d=debts[i];
-  const newName=prompt("Название долга:",d.name);
-  const newTotal=prompt("Общая сумма долга:",d.total);
-  const newMonthly=prompt("Ежемесячный платёж:",d.monthly);
-  if(newName&&newTotal&&newMonthly){ debts[i]={name:newName,total:Number(newTotal),monthly:Number(newMonthly)}; saveDebts(); renderDebts(); }
-}
-
-// ==== Главная ====
-function daysLeftInMonth(){ const today=new Date(); const lastDay=new Date(today.getFullYear(),today.getMonth()+1,0); return lastDay.getDate()-today.getDate()+1; }
-function getLifePerDay(){ const today=new Date(); const daysInMonth = new Date(today.getFullYear(), today.getMonth()+1, 0).getDate(); return settings.lifeMonth / daysInMonth; }
-
-function saveDay(){
-  const income=Number(document.getElementById('income').value); 
-  if(!income||income<0) return alert("Введите доход!");
-
-  const debtSum = debts.reduce((a,d)=>a+Number(d.monthly),0);
-  const leftDays = daysLeftInMonth();
-  const dailyDebt=debtSum/leftDays;
-
-  const restAfterDebt = income - dailyDebt;
-  const lifeMinPerDay = getLifePerDay();
-  let savings = 0;
-  let life = 0;
-
-  if(restAfterDebt <= lifeMinPerDay){
-    life = restAfterDebt;
-    savings = 0;
-  } else {
-    const maxSavings = restAfterDebt - lifeMinPerDay;
-    const percentSavings = restAfterDebt * settings.savePercent;
-    savings = Math.min(maxSavings, percentSavings);
-    life = restAfterDebt - savings;
-  }
-
-  const today=new Date().toLocaleDateString();
-  todayData.push({date:today,income,life,dailyDebt,savings});
-  localStorage.setItem('todayData',JSON.stringify(todayData));
-  renderToday(); renderChart();
-}
-
-function renderToday(){
-  const output=document.getElementById('output');
-  if(!todayData.length){ output.innerHTML="Введите данные и нажмите «Сохранить день»."; return; }
-  const last=todayData[todayData.length-1];
-  output.innerHTML=`
-    💰 Заработал: ${last.income} ₽<br>
-    💳 На обязательный платёж: ${Math.round(last.dailyDebt)} ₽<br>
-    🏠 На жизнь: <span class="life">${Math.round(last.life)} ₽</span><br>
-    📈 На накопления: <span class="savings">${Math.round(last.savings)} ₽</span>
-  `;
-}
-
-function deleteTodayData(){
-  if(!todayData.length) return alert("Нет данных для удаления");
-  if(confirm("Удалить последний день?")){ todayData.pop(); localStorage.setItem('todayData',JSON.stringify(todayData)); renderToday(); renderChart(); }
-}
-
-// ==== График ====
-let chart;
-function renderChart(){
-  const ctx=document.getElementById('incomeChart').getContext('2d');
-  const labels=todayData.map(d=>d.date);
-  const dataLife=todayData.map(d=>d.life);
-  const dataDebt=todayData.map(d=>d.dailyDebt);
-  const dataSavings=todayData.map(d=>d.savings);
-  if(chart) chart.destroy();
-  chart=new Chart(ctx,{
-    type:'bar',
-    data:{labels,datasets:[
-      {label:'Жизнь', data:dataLife, backgroundColor:'rgba(255,193,7,0.7)'},
-      {label:'Обязательный платеж', data:dataDebt, backgroundColor:'rgba(244,67,54,0.7)'},
-      {label:'Накопления', data:dataSavings, backgroundColor:'rgba(33,150,243,0.7)'}
-    ]},
-    options:{responsive:true,plugins:{legend:{position:'top'}},scales:{x:{stacked:true}, y:{stacked:true,beginAtZero:true}}}
+const particles = [];
+for(let i=0;i<points.length;i++){
+  const p = points[i];
+  particles.push({
+    x: Math.random()*canvas.width,
+    y: Math.random()*canvas.height,
+    targetX: p.x,
+    targetY: p.y,
+    radius: Math.random()*3+2,
+    vx:0,
+    vy:0
   });
 }
 
-// ==== Дата ====
-function setToday(){ document.getElementById('today-date').innerText = new Date().toLocaleDateString(); }
-setToday();
+let phase = 0; // 0 - сборка точек, 1 - свечение и сплавление, 2 - финальный символ
+let glowAlpha = 0;
 
-// ==== Анимация подбрасываемой монеты с рукой ====
-function startAnimation(){
-  const canvas=document.getElementById('animationCanvas');
-  const ctx=canvas.getContext('2d');
-  canvas.width=window.innerWidth;
-  canvas.height=window.innerHeight;
-  const centerX=canvas.width/2;
-  const centerY=canvas.height/2;
+function animate(){
+  ctx.clearRect(0,0,canvas.width,canvas.height);
 
-  let frame = 0;
-  const totalFrames = 300; // ~5 секунд при 60fps
+  if(phase === 0){
+    let arrivedCount = 0;
+    particles.forEach(p=>{
+      const dx = p.targetX - p.x;
+      const dy = p.targetY - p.y;
+      p.vx += dx*0.008;
+      p.vy += dy*0.008;
+      p.vx *= 0.9;
+      p.vy *= 0.9;
+      p.x += p.vx;
+      p.y += p.vy;
 
-  // Монета
-  const coin = {x:centerX, y:centerY+150, vy:-15, angle:0, vAngle:0.3, landed:false};
+      if(Math.abs(dx)<0.5 && Math.abs(dy)<0.5) arrivedCount++;
 
-  function drawHand(progress){
+      ctx.fillStyle = 'gold';
+      ctx.beginPath();
+      ctx.arc(p.x,p.y,p.radius,0,Math.PI*2);
+      ctx.fill();
+    });
+
+    if(arrivedCount === particles.length) phase = 1;
+
+  } else if(phase === 1){
+    glowAlpha += 0.01;
+    if(glowAlpha>1) glowAlpha = 1;
+
+    particles.forEach(p=>{
+      p.x += (p.targetX - p.x)*0.03;
+      p.y += (p.targetY - p.y)*0.03;
+      p.radius *= 0.97;
+      ctx.fillStyle = `rgba(255,215,0,${0.5*glowAlpha})`;
+      ctx.beginPath();
+      ctx.arc(p.x,p.y,p.radius,0,Math.PI*2);
+      ctx.fill();
+    });
+
     ctx.save();
-    ctx.translate(centerX,centerY+150);
-    ctx.rotate(-Math.PI/8*(1-progress)); // рука подбрасывает монету
-    ctx.fillStyle = '#d2a679';
-    ctx.fillRect(-20,0,40,80);
+    ctx.shadowColor = `rgba(255,255,180,${glowAlpha})`;
+    ctx.shadowBlur = 60*glowAlpha;
+    ctx.fillStyle = 'rgba(255,215,0,0.7)';
+    ctx.font = `${fontSize}px Arial`;
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText('₽', centerX, centerY);
+    ctx.restore();
+
+    if(glowAlpha >= 1) phase = 2;
+
+  } else if(phase === 2){
+    glowAlpha -= 0.005;
+    if(glowAlpha <0) glowAlpha = 0;
+
+    ctx.save();
+    ctx.shadowColor = `rgba(255,255,180,${glowAlpha})`;
+    ctx.shadowBlur = 20*glowAlpha;
+    ctx.fillStyle = 'gold';
+    ctx.font = `${fontSize}px Arial`;
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText('₽', centerX, centerY);
     ctx.restore();
   }
-
-  function drawCoin(){
-    ctx.save();
-    ctx.translate(coin.x,coin.y);
-    ctx.rotate(coin.angle);
-    ctx.beginPath();
-    ctx.arc(0,0,30,0,2*Math.PI);
-    ctx.fillStyle='gold';
-    ctx.fill();
-    ctx.lineWidth=2;
-    ctx.strokeStyle='darkgoldenrod';
-    ctx.stroke();
-    ctx.fillStyle='black';
-    ctx.font='24px Arial';
-    ctx.textAlign='center';
-    ctx.textBaseline='middle';
-    ctx.fillText('₽',0,0);
-    ctx.restore();
-  }
-
-  function animate(){
-    ctx.clearRect(0,0,canvas.width,canvas.height);
-
-    // обновление монеты
-    if(!coin.landed){
-      coin.y += coin.vy;
-      coin.vy += 0.5; // гравитация
-      coin.angle += coin.vAngle;
-      if(coin.y >= centerY){
-        coin.y = centerY;
-        coin.vy = 0;
-        coin.vAngle = 0;
-        coin.landed = true;
-      }
-    }
-
-    // рисуем руку, если монета еще в воздухе
-    if(!coin.landed) drawHand(coin.y/ (centerY+150));
-
-    // рисуем монету
-    drawCoin();
-
-    frame++;
-    if(frame<totalFrames){
-      requestAnimationFrame(animate);
-    } else {
-      canvas.style.display='none';
-      document.querySelectorAll('.page').forEach(p=>p.style.display='block');
-    }
-   }
 
   requestAnimationFrame(animate);
 }
 
-// ==== Инициализация после загрузки DOM ====
-document.addEventListener('DOMContentLoaded',()=>{
-  document.querySelectorAll('.page').forEach(p=>p.style.display='none'); // скрываем страницы
-  applyBackgroundFromSettings();
-  startAnimation(); // запускаем анимацию подбрасывания монеты
-  renderDebts();
-  renderToday();
-  renderChart();
-  document.querySelectorAll('button').forEach(b=>b.style.background=settings.btnColor);
-});
+// После ~6 секунд анимации открываем приложение
+setTimeout(()=>{ document.getElementById('canvas').style.display='none'; document.getElementById('app').style.display='block'; },6000);
+
+animate();
+
+// ------------------- Логика приложения -------------------
+let lifeMonth = 15000;
+let debts = JSON.parse(localStorage.getItem('debts')||'[]');
+let incomes = JSON.parse(localStorage.getItem('incomes')||'{}');
+
+function showPage(page){
+  document.getElementById('mainPage').style.display = (page==='main')?'block':'none';
+  document.getElementById('debtsPage').style.display = (page==='debts')?'block':'none';
+  document.getElementById('settingsPage').style.display = (page==='settings')?'block':'none';
+  updateMain();
+  updateDebts();
+}
+
+function addDebt(){
+  const name = document.getElementById('debtName').value;
+  const amount = parseFloat(document.getElementById('debtAmount').value);
+  if(name && !isNaN(amount)){
+    debts.push({name,amount});
+    localStorage.setItem('debts',JSON.stringify(debts));
+    document.getElementById('debtName').value='';
+    document.getElementById('debtAmount').value='';
+    updateDebts();
+  }
+}
+
+function updateDebts(){
+  const container = document.getElementById('debtsList');
+  container.innerHTML='';
+  debts.forEach((d,i)=>{
+    const div = document.createElement('div');
+    div.innerHTML = `${d.name}: ${d.amount}₽ <button onclick="removeDebt(${i})">Удалить</button>`;
+    container.appendChild(div);
+  });
+}
+
+function removeDebt(i){
+  debts.splice(i,1);
+  localStorage.setItem('debts',JSON.stringify(debts));
+  updateDebts();
+}
+
+function addIncome(){
+  const today = new Date().toISOString().slice(0,10);
+  const val = parseFloat(document.getElementById('todayIncome').value);
+  if(!isNaN(val)){
+    incomes[today] = val;
+    localStorage.setItem('incomes',JSON.stringify(incomes));
+    document.getElementById('todayIncome').value='';
+    updateMain();
+  }
+}
+
+function deleteToday(){
+  const today = new Date().toISOString().slice(0,10);
+  delete incomes[today];
+  localStorage.setItem('incomes',JSON.stringify(incomes));
+  updateMain();
+}
+
+function updateMain(){
+  const today = new Date().toISOString().slice(0,10);
+  const income = incomes[today]||0;
+  const totalDebt = debts.reduce((a,d)=>a+d.amount,0);
+  const daysInMonth = new Date(new Date().getFullYear(), new Date().getMonth()+1,0).getDate();
+  const dayToday = new Date().getDate();
+  const remainingDays = daysInMonth - dayToday +1;
+  const debtToday = totalDebt/remainingDays;
+  const lifeToday = lifeMonth/daysInMonth;
+  let saveToday = 0;
+  if(income - debtToday > lifeToday){
+    saveToday = (income - debtToday)*0.3;
+  }
+  document.getElementById('lifeToday').innerText = Math.max(income-debtToday-saveToday,0).toFixed(0);
+  document.getElementById('debtToday').innerText = debtToday.toFixed(0);
+  document.getElementById('saveToday').innerText = saveToday.toFixed(0);
+}
+
+// ------------------- Настройки -------------------
+function updateSettings(){
+  document.body.style.background = document.getElementById('bgColor').value;
+  const buttons = document.querySelectorAll('button');
+  buttons.forEach(b=>b.style.background = document.getElementById('btnColor').value);
+}
+
+showPage('main');
 </script>
 </body>
 </html>
