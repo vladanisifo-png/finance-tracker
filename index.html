@@ -16,7 +16,6 @@ body {
   overflow-x: hidden;
 }
 
-/* ===== Canvas анимации ===== */
 #animationCanvas {
   position:fixed;
   top:0; left:0;
@@ -25,7 +24,6 @@ body {
   background: linear-gradient(120deg,#111 0%,#222 100%);
 }
 
-/* ===== Жидкое стекло ===== */
 .card {
   background: rgba(255,255,255,0.2);
   border-radius: 30px;
@@ -48,7 +46,6 @@ input, select {
 }
 input::placeholder{color: rgba(0,0,0,0.4);}
 
-/* ===== Кнопки ===== */
 button {
   width:100%; padding:16px; margin-top:16px;
   font-size:18px; font-weight:bold; color:#fff;
@@ -61,30 +58,16 @@ button:active { transform:translateY(0); background: linear-gradient(135deg, rgb
 .delete-day-btn { background: rgba(255,0,0,0.6); }
 .delete-day-btn:hover { background: rgba(255,0,0,0.8); }
 
-/* ===== Долги ===== */
-.debt-item {
-  display:flex; flex-direction:column; justify-content:space-between; align-items:flex-start;
-  padding:8px 0; border-bottom:1px solid rgba(255,255,255,0.2); margin-bottom:6px;
-}
-.debt-item span { font-weight:600; font-size:15px; }
-.edit-btn,.delete-btn { margin-top:6px; cursor:pointer; padding:6px 10px; border:none;border-radius:12px;color:#fff;font-size:14px; backdrop-filter: blur(6px); }
-.edit-btn { background: rgba(0,123,255,0.6); }
-.edit-btn:hover { background: rgba(0,123,255,0.8); }
-.delete-btn { background: rgba(255,0,0,0.6); }
-.delete-btn:hover { background: rgba(255,0,0,0.8); }
-
-/* ===== Навигация ===== */
 nav { display:flex; justify-content:space-around; margin-bottom:12px; position:relative; z-index:1; }
 nav button { width:auto; padding:10px 20px; background: rgba(255,255,255,0.2); border-radius:14px; font-size:16px; backdrop-filter: blur(6px); transition:0.2s; }
 nav button.active { background: rgba(255,255,255,0.35); }
 
-/* ===== Результаты ===== */
 .result span.savings { color:#007BFF;font-weight:600; }
 .result span.life { color:#FFC107;font-weight:600; }
 
 .page { position: relative; z-index:1; }
 
-@media(max-width:400px){ .debt-item{font-size:14px;} .edit-btn,.delete-btn{padding:5px 8px;font-size:13px;} }
+@media(max-width:400px){ .edit-btn,.delete-btn{padding:5px 8px;font-size:13px;} }
 </style>
 </head>
 <body>
@@ -97,7 +80,6 @@ nav button.active { background: rgba(255,255,255,0.35); }
   <button id="btn-settings" onclick="showPage('settings')">Настройки</button>
 </nav>
 
-<!-- ===== Главная ===== -->
 <div id="home" class="page">
   <h1>Сегодня: <span id="today-date"></span></h1>
   <div class="card">
@@ -116,7 +98,6 @@ nav button.active { background: rgba(255,255,255,0.35); }
   </div>
 </div>
 
-<!-- ===== Долги ===== -->
 <div id="debts" class="page">
   <div class="card">
     <label>Название долга</label>
@@ -134,7 +115,6 @@ nav button.active { background: rgba(255,255,255,0.35); }
   </div>
 </div>
 
-<!-- ===== Настройки ===== -->
 <div id="settings" class="page">
   <div class="card">
     <label>Сумма на жизнь за месяц (₽)</label>
@@ -178,7 +158,6 @@ function saveSettings(){
   document.querySelectorAll('button').forEach(b=>b.style.background=settings.btnColor);
   alert("Настройки сохранены!");
 }
-
 function applyBackgroundFromSettings(){
   if(settings.bgImage){
     document.body.style.backgroundImage = `url(${settings.bgImage})`;
@@ -189,7 +168,6 @@ function applyBackgroundFromSettings(){
     document.body.style.background = settings.bgColor;
   }
 }
-
 function applyBackgroundImage(){
   const fileInput = document.getElementById('bg-image');
   if(fileInput.files && fileInput.files[0]){
@@ -308,11 +286,7 @@ function renderChart(){
       {label:'Обязательный платеж', data:dataDebt, backgroundColor:'rgba(244,67,54,0.7)'},
       {label:'Накопления', data:dataSavings, backgroundColor:'rgba(33,150,243,0.7)'}
     ]},
-    options:{
-      responsive:true,
-      plugins:{legend:{position:'top'}},
-      scales:{x:{stacked:true}, y:{stacked:true, beginAtZero:true}}
-    }
+    options:{responsive:true,plugins:{legend:{position:'top'}},scales:{x:{stacked:true}, y:{stacked:true,beginAtZero:true}}}
   });
 }
 
@@ -320,97 +294,88 @@ function renderChart(){
 function setToday(){ document.getElementById('today-date').innerText = new Date().toLocaleDateString(); }
 setToday();
 
-// ==== Анимация подбрасываемых монет ₽ ====
+// ==== Анимация подбрасываемой монеты с рукой ====
 function startAnimation(){
   const canvas=document.getElementById('animationCanvas');
   const ctx=canvas.getContext('2d');
   canvas.width=window.innerWidth;
   canvas.height=window.innerHeight;
+  const centerX=canvas.width/2;
+  const centerY=canvas.height/2;
 
-  class Coin{
-    constructor(x){
-      this.x=x;
-      this.y=canvas.height+20;
-      this.vy=-Math.random()*15-10; // вверх
-      this.g=0.5; // гравитация
-      this.angle=0;
-      this.vAngle=Math.random()*0.3+0.2;
-      this.radius=20+Math.random()*10;
-      this.land=false;
-    }
-    update(){
-      if(!this.land){
-        this.y+=this.vy;
-        this.vy+=this.g;
-        this.angle+=this.vAngle;
-        if(this.y >= canvas.height-50){ // приземление
-          this.y = canvas.height-50;
-          this.vy = 0;
-          this.land = true;
-          this.vAngle = 0;
-        }
-      }
-    }
-    draw(ctx){
-      ctx.save();
-      ctx.translate(this.x,this.y);
-      ctx.rotate(this.angle);
-      ctx      // Рисуем "монету" как круг с видимой стороной
-      ctx.beginPath();
-      ctx.arc(0,0,this.radius,0,2*Math.PI);
-      ctx.fillStyle = 'gold';
-      ctx.fill();
-      ctx.lineWidth = 2;
-      ctx.strokeStyle = 'darkgoldenrod';
-      ctx.stroke();
+  let frame = 0;
+  const totalFrames = 300; // ~5 секунд при 60fps
 
-      // Символ ₽ на монете
-      ctx.fillStyle = 'black';
-      ctx.font = `${this.radius}px Arial`;
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle';
-      ctx.fillText('₽',0,0);
+  // Монета
+  const coin = {x:centerX, y:centerY+150, vy:-15, angle:0, vAngle:0.3, landed:false};
 
-      ctx.restore();
-    }
+  function drawHand(progress){
+    ctx.save();
+    ctx.translate(centerX,centerY+150);
+    ctx.rotate(-Math.PI/8*(1-progress)); // рука подбрасывает монету
+    ctx.fillStyle = '#d2a679';
+    ctx.fillRect(-20,0,40,80);
+    ctx.restore();
   }
 
-  const coins = [];
-  const spawnInterval = 300; // каждые 300мс новая монетка
-  let lastSpawn = 0;
+  function drawCoin(){
+    ctx.save();
+    ctx.translate(coin.x,coin.y);
+    ctx.rotate(coin.angle);
+    ctx.beginPath();
+    ctx.arc(0,0,30,0,2*Math.PI);
+    ctx.fillStyle='gold';
+    ctx.fill();
+    ctx.lineWidth=2;
+    ctx.strokeStyle='darkgoldenrod';
+    ctx.stroke();
+    ctx.fillStyle='black';
+    ctx.font='24px Arial';
+    ctx.textAlign='center';
+    ctx.textBaseline='middle';
+    ctx.fillText('₽',0,0);
+    ctx.restore();
+  }
 
-  function animate(time){
+  function animate(){
     ctx.clearRect(0,0,canvas.width,canvas.height);
 
-    // спавн монет
-    if(!lastSpawn) lastSpawn=time;
-    if(time - lastSpawn > spawnInterval){
-      coins.push(new Coin(Math.random()*(canvas.width-100)+50));
-      lastSpawn = time;
+    // обновление монеты
+    if(!coin.landed){
+      coin.y += coin.vy;
+      coin.vy += 0.5; // гравитация
+      coin.angle += coin.vAngle;
+      if(coin.y >= centerY){
+        coin.y = centerY;
+        coin.vy = 0;
+        coin.vAngle = 0;
+        coin.landed = true;
+      }
     }
 
-    coins.forEach(c => {
-      c.update();
-      c.draw(ctx);
-    });
+    // рисуем руку, если монета еще в воздухе
+    if(!coin.landed) drawHand(coin.y/ (centerY+150));
 
-    requestAnimationFrame(animate);
-  }
+    // рисуем монету
+    drawCoin();
+
+    frame++;
+    if(frame<totalFrames){
+      requestAnimationFrame(animate);
+    } else {
+      canvas.style.display='none';
+      document.querySelectorAll('.page').forEach(p=>p.style.display='block');
+    }
+   }
 
   requestAnimationFrame(animate);
-
-  // через 5 секунд скрываем анимацию и показываем основной интерфейс
-  setTimeout(()=>{
-    canvas.style.display='none';
-    document.querySelectorAll('.page').forEach(p=>p.style.display='block');
-  },5000);
 }
 
-// ==== Инициализация ====
+// ==== Инициализация после загрузки DOM ====
 document.addEventListener('DOMContentLoaded',()=>{
-  document.querySelectorAll('.page').forEach(p=>p.style.display='none');
+  document.querySelectorAll('.page').forEach(p=>p.style.display='none'); // скрываем страницы
   applyBackgroundFromSettings();
-  startAnimation();
+  startAnimation(); // запускаем анимацию подбрасывания монеты
   renderDebts();
   renderToday();
   renderChart();
