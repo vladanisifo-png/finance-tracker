@@ -22,7 +22,7 @@ body {
   top:0; left:0;
   width:100%; height:100%;
   z-index:9999;
-  background:#111;
+  background: linear-gradient(120deg, #111 0%, #222 100%);
 }
 
 /* ===== Жидкое стекло ===== */
@@ -125,7 +125,7 @@ nav button.active { background: rgba(255,255,255,0.35); }
 </nav>
 
 <!-- ===== Главная ===== -->
-<div id="home" class="page" style="display:none">
+<div id="home" class="page">
   <h1>Сегодня: <span id="today-date"></span></h1>
   <div class="card">
     <label for="income">Заработал сегодня (₽)</label>
@@ -144,7 +144,7 @@ nav button.active { background: rgba(255,255,255,0.35); }
 </div>
 
 <!-- ===== Долги ===== -->
-<div id="debts" class="page" style="display:none">
+<div id="debts" class="page">
   <div class="card">
     <label>Название долга</label>
     <input type="text" id="debt-name" placeholder="Например, Кредит">
@@ -162,7 +162,7 @@ nav button.active { background: rgba(255,255,255,0.35); }
 </div>
 
 <!-- ===== Настройки ===== -->
-<div id="settings" class="page" style="display:none">
+<div id="settings" class="page">
   <div class="card">
     <label>Сумма на жизнь за месяц (₽)</label>
     <input type="number" id="life-month" placeholder="Например, 25000" value="25000">
@@ -221,7 +221,6 @@ function applyBackgroundFromSettings(){
     document.body.style.background = settings.bgColor;
   }
 }
-applyBackgroundFromSettings();
 
 function applyBackgroundImage(){
   const fileInput = document.getElementById('bg-image');
@@ -387,18 +386,18 @@ function startAnimation() {
   const particles = [];
 
   for (let i = 0; i < particleCount; i++) {
-    const angle = Math.random    * 2 * Math.PI;
+    const angle = Math.random() * 2 * Math.PI;
     const r = radius + (Math.random() - 0.5) * 20;
     const x = centerX + r * Math.cos(angle);
     const y = centerY + r * Math.sin(angle);
     particles.push({
-      x: Math.random() * canvas.width,
+      x:      Math.random() * canvas.width,
       y: Math.random() * canvas.height,
       targetX: x,
       targetY: y,
       vx: 0,
       vy: 0,
-      radius: Math.random() * 5 + 3 // радиус монетки 3-8px
+      radius: Math.random() * 5 + 3
     });
   }
 
@@ -458,12 +457,28 @@ function startAnimation() {
   requestAnimationFrame(animate);
 }
 
-// ===== Инициализация =====
-renderDebts(); renderToday(); renderChart();
-document.querySelectorAll('button').forEach(b => b.style.background = settings.btnColor);
+// ===== Инициализация после загрузки DOM =====
+document.addEventListener('DOMContentLoaded', () => {
+  // скрываем основной контент до конца анимации
+  document.querySelectorAll('.page').forEach(p => p.style.display = 'none');
 
-// Запускаем анимацию ₽ при загрузке
-window.onload = startAnimation;
+  // применяем фон
+  applyBackgroundFromSettings();
+
+  // запускаем анимацию ₽
+  startAnimation();
+
+  // отображаем дату
+  setToday();
+
+  // рендерим существующие долги и график
+  renderDebts();
+  renderToday();
+  renderChart();
+
+  // кнопки с выбранным цветом
+  document.querySelectorAll('button').forEach(b => b.style.background=settings.btnColor);
+});
 </script>
 </body>
 </html>
