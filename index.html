@@ -183,7 +183,7 @@ nav button.active { background: rgba(255,255,255,0.35); }
 </div>
 
 <script>
-// ===== Навигация =====
+// ==== Навигация ====
 function showPage(id){
   document.querySelectorAll('.page').forEach(p=>p.style.display='none');
   document.getElementById(id).style.display='block';
@@ -191,12 +191,12 @@ function showPage(id){
   document.getElementById('btn-'+id).classList.add('active');
 }
 
-// ===== LocalStorage =====
+// ==== LocalStorage ====
 let debts = JSON.parse(localStorage.getItem('debts'))||[];
 let todayData = JSON.parse(localStorage.getItem('todayData'))||[];
 let settings = JSON.parse(localStorage.getItem('settings'))||{lifeMonth:25000,bgColor:'#e0e5ec',btnColor:'#4caf50',savePercent:0.3,bgImage:null};
 
-// ===== Настройки =====
+// ==== Настройки ====
 function saveSettings(){
   const life = Number(document.getElementById('life-month').value);
   const bg = document.getElementById('bg-color').value;
@@ -210,7 +210,7 @@ function saveSettings(){
   alert("Настройки сохранены!");
 }
 
-// ===== Фон =====
+// ==== Фон ====
 function applyBackgroundFromSettings(){
   if(settings.bgImage){
     document.body.style.backgroundImage = `url(${settings.bgImage})`;
@@ -221,7 +221,6 @@ function applyBackgroundFromSettings(){
     document.body.style.background = settings.bgColor;
   }
 }
-
 function applyBackgroundImage(){
   const fileInput = document.getElementById('bg-image');
   if(fileInput.files && fileInput.files[0]){
@@ -242,7 +241,7 @@ function removeBackgroundImage(){
   }
 }
 
-// ===== Долги =====
+// ==== Долги ====
 function saveDebts(){ localStorage.setItem('debts',JSON.stringify(debts)); }
 function renderDebts(){
   const list = document.getElementById('debts-list'); list.innerHTML=''; let total=0;
@@ -274,7 +273,7 @@ function editDebt(i){
   if(newName&&newTotal&&newMonthly){ debts[i]={name:newName,total:Number(newTotal),monthly:Number(newMonthly)}; saveDebts(); renderDebts(); }
 }
 
-// ===== Главная =====
+// ==== Главная ====
 function daysLeftInMonth(){
   const today=new Date(); 
   const lastDay=new Date(today.getFullYear(),today.getMonth()+1,0);
@@ -332,7 +331,7 @@ function deleteTodayData(){
   if(confirm("Удалить последний день?")){ todayData.pop(); localStorage.setItem('todayData',JSON.stringify(todayData)); renderToday(); renderChart(); }
 }
 
-// ===== График =====
+// ==== График ====
 let chart;
 function renderChart(){
   const ctx=document.getElementById('incomeChart').getContext('2d');
@@ -368,116 +367,125 @@ function renderChart(){
   });
 }
 
-// ===== Дата =====
+// ==== Дата ====
 function setToday(){ document.getElementById('today-date').innerText = new Date().toLocaleDateString(); }
 setToday();
 
-// ===== Анимация ₽ из "монеток" =====
-function startAnimation() {
-  const canvas = document.getElementById('animationCanvas');
-  const ctx = canvas.getContext('2d');
-  canvas.width = window.innerWidth;
-  canvas.height = window.innerHeight;
+// ==== Анимация ₽ из монеток с формой символа ₽ ====
+function startAnimation(){
+  const canvas=document.getElementById('animationCanvas');
+  const ctx=canvas.getContext('2d');
+  canvas.width=window.innerWidth;
+  canvas.height=window.innerHeight;
+  const centerX=canvas.width/2;
+  const centerY=canvas.height/2;
 
-  const centerX = canvas.width / 2;
-  const centerY = canvas.height / 2;
-  const particleCount = 250;
-  const radius = 100;
-  const particles = [];
+  // временный canvas для контура ₽
+  const textCanvas=document.createElement('canvas');
+  textCanvas.width=canvas.width;
+  textCanvas.height=canvas.height;
+  const tctx=textCanvas.getContext('2d');
+  const fontSize=Math.min(canvas.width,canvas.height)/2;
+  tctx.font=`${fontSize}px Arial`;
+  tctx.textAlign='center';
+  tctx.textBaseline='middle';
+tctx.strokeStyle='white';
+tctx.lineWidth=3;
+tctx.strokeText('₽', centerX, centerY);
 
-  for (let i = 0; i < particleCount; i++) {
-    const angle = Math.random() * 2 * Math.PI;
-    const r = radius + (Math.random() - 0.5) * 20;
-    const x = centerX + r * Math.cos(angle);
-    const y = centerY + r * Math.sin(angle);
-    particles.push({
-      x:      Math.random() * canvas.width,
-      y: Math.random() * canvas.height,
-      targetX: x,
-      targetY: y,
-      vx: 0,
-      vy: 0,
-      radius: Math.random() * 5 + 3
-    });
-  }
-
-  let startTime = null;
-  const duration = 5000; // 5 секунд
-
-  function animate(timestamp) {
-    if (!startTime) startTime = timestamp;
-    const progress = Math.min((timestamp - startTime) / duration, 1);
-
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-    // рисуем монетки
-    particles.forEach(p => {
-      p.vx += (p.targetX - p.x) * 0.05;
-      p.vy += (p.targetY - p.y) * 0.05;
-      p.vx *= 0.85;
-      p.vy *= 0.85;
-      p.x += p.vx * progress;
-      p.y += p.vy * progress;
-
-      const grad = ctx.createRadialGradient(p.x, p.y, p.radius/4, p.x, p.y, p.radius);
-      grad.addColorStop(0, 'rgba(255,255,200,1)');
-      grad.addColorStop(0.5, 'rgba(255,215,0,0.9)');
-      grad.addColorStop(1, 'rgba(255,165,0,0.6)');
-      ctx.fillStyle = grad;
-      ctx.beginPath();
-      ctx.arc(p.x, p.y, p.radius, 0, 2 * Math.PI);
-      ctx.fill();
-    });
-
-    // соединяем линии между близкими монетками
-    for (let i = 0; i < particles.length; i++) {
-      for (let j = i + 1; j < particles.length; j++) {
-        const dx = particles[i].x - particles[j].x;
-        const dy = particles[i].y - particles[j].y;
-        const dist = Math.sqrt(dx*dx + dy*dy);
-        if(dist < 30){
-          ctx.strokeStyle = 'rgba(255,215,0,0.3)';
-          ctx.lineWidth = 1;
-          ctx.beginPath();
-          ctx.moveTo(particles[i].x, particles[i].y);
-          ctx.lineTo(particles[j].x, particles[j].y);
-          ctx.stroke();
-        }
-      }
-    }
-
-    if(progress < 1){
-      requestAnimationFrame(animate);
-    } else {
-      canvas.style.display = 'none';
-      document.querySelectorAll('.page').forEach(p => p.style.display = 'block');
+// получаем точки контура символа ₽
+const imageData = tctx.getImageData(0,0,canvas.width,canvas.height).data;
+const points=[];
+for(let y=0; y<canvas.height; y+=4){
+  for(let x=0; x<canvas.width; x+=4){
+    const idx=(y*canvas.width + x)*4;
+    if(imageData[idx+3]>128){ // если пиксель непрозрачный
+      points.push({x,y});
     }
   }
-
-  requestAnimationFrame(animate);
 }
 
-// ===== Инициализация после загрузки DOM =====
-document.addEventListener('DOMContentLoaded', () => {
-  // скрываем основной контент до конца анимации
-  document.querySelectorAll('.page').forEach(p => p.style.display = 'none');
+// создаем частицы
+const particleCount = 300;
+const particles = [];
+for(let i=0;i<particleCount;i++){
+  const target = points[Math.floor(Math.random()*points.length)];
+  particles.push({
+    x: Math.random()*canvas.width,
+    y: Math.random()*canvas.height,
+    targetX: target.x,
+    targetY: target.y,
+    vx:0,
+    vy:0,
+    radius: Math.random()*5 + 2
+  });
+}
 
-  // применяем фон
+let startTime=null;
+const duration=5000; // 5 секунд
+
+function animate(timestamp){
+  if(!startTime) startTime=timestamp;
+  const progress=Math.min((timestamp-startTime)/duration,1);
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+
+  // рисуем монетки
+  particles.forEach(p=>{
+    p.vx += (p.targetX - p.x)*0.05;
+    p.vy += (p.targetY - p.y)*0.05;
+    p.vx *= 0.85;
+    p.vy *= 0.85;
+    p.x += p.vx*progress;
+    p.y += p.vy*progress;
+
+    const grad=ctx.createRadialGradient(p.x,p.y,p.radius/4,p.x,p.y,p.radius);
+    grad.addColorStop(0,'rgba(255,255,200,1)');
+    grad.addColorStop(0.5,'rgba(255,215,0,0.9)');
+    grad.addColorStop(1,'rgba(255,165,0,0.6)');
+    ctx.fillStyle=grad;
+    ctx.beginPath();
+    ctx.arc(p.x,p.y,p.radius,0,2*Math.PI);
+    ctx.fill();
+  });
+
+  // соединяем линии между близкими монетками
+  for(let i=0;i<particles.length;i++){
+    for(let j=i+1;j<particles.length;j++){
+      const dx=particles[i].x-particles[j].x;
+      const dy=particles[i].y-particles[j].y;
+      const dist=Math.sqrt(dx*dx+dy*dy);
+      if(dist<30){
+        ctx.strokeStyle='rgba(255,215,0,0.2)';
+        ctx.lineWidth=1;
+        ctx.beginPath();
+        ctx.moveTo(particles[i].x,particles[i].y);
+        ctx.lineTo(particles[j].x,particles[j].y);
+        ctx.stroke();
+      }
+    }
+  }
+
+  if(progress<1){
+    requestAnimationFrame(animate);
+  } else {
+    canvas.style.display='none';
+    document.querySelectorAll('.page').forEach(p=>p.style.display='block');
+  }
+}
+
+requestAnimationFrame(animate);
+}
+
+// ==== Инициализация после загрузки DOM ====
+document.addEventListener('DOMContentLoaded',()=>{
+  document.querySelectorAll('.page').forEach(p=>p.style.display='none');
   applyBackgroundFromSettings();
-
-  // запускаем анимацию ₽
   startAnimation();
-
-  // отображаем дату
   setToday();
-
-  // рендерим существующие долги и график
   renderDebts();
   renderToday();
   renderChart();
-
-  // кнопки с выбранным цветом
-  document.querySelectorAll('button').forEach(b => b.style.background=settings.btnColor);
+  document.querySelectorAll('button').forEach(b=>b.style.background=settings.btnColor);
 });
 </script>
 </body>
