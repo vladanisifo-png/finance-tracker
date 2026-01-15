@@ -219,7 +219,7 @@ function daysLeftInMonth(){
 function getLifePerDay(){
   const today = new Date();
   const daysInMonth = new Date(today.getFullYear(), today.getMonth()+1, 0).getDate();
-  return Math.round(settings.lifeMonth / daysInMonth);
+  return settings.lifeMonth / daysInMonth;
 }
 
 function saveDay(){
@@ -228,18 +228,20 @@ function saveDay(){
 
   const debtSum = debts.reduce((a,d)=>a+Number(d.monthly),0);
   const leftDays = daysLeftInMonth();
-  const dailyDebt=Math.round(debtSum/leftDays);
+  const dailyDebt=debtSum/leftDays;
 
   const restAfterDebt = income - dailyDebt;
   const lifeMinPerDay = getLifePerDay();
-  let savings=0, life=0;
+  let savings = 0;
+  let life = 0;
 
   if(restAfterDebt <= lifeMinPerDay){
     life = restAfterDebt;
     savings = 0;
   } else {
-    // максимально возможные накопления, чтобы не уходить ниже минимальной жизни
-    savings = Math.min(Math.round(restAfterDebt * settings.savePercent), restAfterDebt - lifeMinPerDay);
+    const maxSavings = restAfterDebt - lifeMinPerDay;
+    const percentSavings = restAfterDebt * settings.savePercent;
+    savings = Math.min(maxSavings, percentSavings);
     life = restAfterDebt - savings;
   }
 
@@ -255,9 +257,9 @@ function renderToday(){
   const last=todayData[todayData.length-1];
   output.innerHTML=`
     💰 Заработал: ${last.income} ₽<br>
-    💳 На обязательный платёж: ${last.dailyDebt} ₽<br>
-    🏠 На жизнь: <span class="life">${last.life} ₽</span><br>
-    📈 На накопления: <span class="savings">${last.savings} ₽</span>
+    💳 На обязательный платёж: ${Math.round(last.dailyDebt)} ₽<br>
+    🏠 На жизнь: <span class="life">${Math.round(last.life)} ₽</span><br>
+    📈 На накопления: <span class="savings">${Math.round(last.savings)} ₽</span>
   `;
 }
 
@@ -282,7 +284,11 @@ function renderChart(){
       {label:'Обязательный платеж', data:dataDebt, backgroundColor:'rgba(244,67,54,0.7)'},
       {label:'Накопления', data:dataSavings, backgroundColor:'rgba(33,150,243,0.7)'}
     ]},
-    options:{responsive:true,plugins:{legend:{position:'top'}},scales:{y:{beginAtZero:true}}}
+    options:{
+      responsive:true,
+      plugins:{legend:{position:'top'}, tooltip:{mode:'index', intersect:false}},
+      scales:{x:{stacked:true}, y:{stacked:true, beginAtZero:true}}
+    }
   });
 }
 
