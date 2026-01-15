@@ -1,26 +1,54 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Финансовый трекер</title>
-  <style>
-    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif; background:#f5f5f5; margin:0; padding:16px; color:#333; }
-    h1 { text-align:center; margin-bottom:16px; }
-    .card { background:#fff; border-radius:12px; padding:16px; margin-bottom:16px; box-shadow:0 4px 12px rgba(0,0,0,0.08); }
-    label { display:block; font-weight:600; margin-top:12px; color:#555; }
-    input { width:100%; padding:12px; margin-top:6px; border-radius:8px; border:1px solid #ccc; font-size:16px; box-sizing:border-box; }
-    button { width:100%; padding:14px; margin-top:16px; font-size:18px; font-weight:bold; color:#fff; background-color:#4CAF50; border:none; border-radius:10px; cursor:pointer; }
-    button:active { background-color:#45a049; }
-    .debt-item { display:flex; justify-content:space-between; align-items:center; padding:8px 0; border-bottom:1px solid #eee; }
-    .debt-item span { font-weight:bold; }
-    .edit-btn, .delete-btn { margin-left:8px; cursor:pointer; padding:4px 8px; border:none; border-radius:6px; color:#fff; }
-    .edit-btn { background:#007BFF; }
-    .delete-btn { background:#E53935; }
-    nav { display:flex; justify-content:space-around; margin-bottom:16px; }
-    nav button { width:auto; padding:10px 20px; background:#888; border-radius:8px; font-size:16px; }
-    nav button.active { background:#4CAF50; }
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Финансовый трекер</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+body { font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif; background:#e0e5ec; margin:0; padding:12px; color:#333;}
+h1,h2{text-align:center;margin:8px 0;}
+/* ======= Жидкое стекло для карточек ======= */
+.card{
+  background: rgba(255,255,255,0.2);
+  border-radius: 20px;
+  padding: 16px;
+  margin-bottom: 16px;
+  box-shadow: 0 8px 32px rgba(31,38,135,0.1);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255,255,255,0.25);
+  transition: transform 0.2s;
+}
+.card:hover{ transform: translateY(-2px); }
+
+label{display:block;font-weight:600;margin-top:10px;color:#555;font-size:16px;}
+input,select{width:100%;padding:12px;margin-top:6px;border-radius:14px;border:1px solid rgba(255,255,255,0.3);background:rgba(255,255,255,0.15);color:#333;font-size:16px;box-sizing:border-box;backdrop-filter: blur(4px);}
+input::placeholder{color:rgba(0,0,0,0.4);}
+
+button{
+  width:100%;padding:14px;margin-top:14px;font-size:18px;font-weight:bold;color:#fff;background: rgba(255,255,255,0.15);border:none;border-radius:14px;
+  cursor:pointer;backdrop-filter: blur(6px);transition:0.2s, transform 0.2s;
+}
+button:hover{ transform: translateY(-2px); background: rgba(255,255,255,0.25);}
+button:active{ transform: translateY(0px); background: rgba(255,255,255,0.3);}
+.delete-day-btn{background: rgba(255,0,0,0.25); color:#fff;}
+.delete-day-btn:hover{background: rgba(255,0,0,0.4);}
+.debt-item{display:flex;flex-direction:column;justify-content:space-between;align-items:flex-start;padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.2);margin-bottom:6px;}
+.debt-item span{font-weight:600;font-size:15px;}
+.edit-btn,.delete-btn{margin-top:6px;cursor:pointer;padding:6px 10px;border:none;border-radius:12px;color:#fff;font-size:14px;backdrop-filter: blur(6px);}
+.edit-btn{background: rgba(0,123,255,0.25);}
+.edit-btn:hover{background: rgba(0,123,255,0.4);}
+.delete-btn{background: rgba(255,0,0,0.25);}
+.delete-btn:hover{background: rgba(255,0,0,0.4);}
+nav{display:flex;justify-content:space-around;margin-bottom:12px;}
+nav button{width:auto;padding:10px 20px;background: rgba(255,255,255,0.15);border-radius:14px;font-size:16px;backdrop-filter: blur(6px);transition:0.2s;}
+nav button.active{background: rgba(255,255,255,0.25);}
+.result span.savings{color:#007BFF;font-weight:600;}
+.result span.free{color:#4CAF50;font-weight:600;}
+.result span.warning{color:#E53935;font-weight:600;}
+@media(max-width:400px){.debt-item{font-size:14px;}.edit-btn,.delete-btn{padding:5px 8px;font-size:13px;}}
+</style>
 </head>
 <body>
 
@@ -29,129 +57,152 @@
   <button id="btn-debts" onclick="showPage('debts')">Долги</button>
 </nav>
 
-<!-- СТРАНИЦА 1: Главная -->
 <div id="home" class="page">
+  <h1>Сегодня: <span id="today-date"></span></h1>
   <div class="card">
     <label for="hours">Часы работы</label>
     <input type="number" id="hours" placeholder="Например, 6">
     <label for="income">Заработал сегодня (₽)</label>
     <input type="number" id="income" placeholder="Например, 3500">
     <button onclick="saveDay()">Сохранить день</button>
+    <button class="delete-day-btn" onclick="deleteTodayData()">Удалить последний день</button>
   </div>
   <div class="card">
     <h2>Результат</h2>
     <div class="result" id="output">Введите данные и нажмите «Сохранить день».</div>
   </div>
+  <div class="card">
+    <h2>График доходов</h2>
+    <canvas id="incomeChart" style="width:100%;height:220px;"></canvas>
+  </div>
 </div>
 
-<!-- СТРАНИЦА 2: Долги -->
 <div id="debts" class="page" style="display:none;">
   <div class="card">
     <label>Название долга</label>
     <input type="text" id="debt-name" placeholder="Например, Кредит">
     <label>Общая сумма (₽)</label>
-    <input type="number" id="debt-total" placeholder="Например, 15000">
+    <input type="number" id="debt-total" placeholder="15000">
     <label>Ежемесячный платёж (₽)</label>
-    <input type="number" id="debt-monthly" placeholder="Например, 5000">
+    <input type="number" id="debt-monthly" placeholder="5000">
+    <label>Дата платежа</label>
+    <input type="date" id="debt-date">
     <button onclick="addDebt()">Добавить долг</button>
   </div>
   <div class="card">
     <h2>Список долгов</h2>
     <div id="debts-list"></div>
-    <div style="margin-top:10px; font-weight:bold;">Общая сумма долгов: <span id="debts-total">0 ₽</span></div>
+    <div style="margin-top:10px;font-weight:bold;">Общая сумма долгов: <span id="debts-total">0 ₽</span></div>
   </div>
 </div>
 
 <script>
-  // ======= ПЕРЕКЛЮЧЕНИЕ СТРАНИЦ =======
-  function showPage(pageId) {
-    document.querySelectorAll('.page').forEach(p => p.style.display='none');
-    document.getElementById(pageId).style.display='block';
-    document.querySelectorAll('nav button').forEach(b => b.classList.remove('active'));
-    if(pageId==='home') document.getElementById('btn-home').classList.add('active');
-    else document.getElementById('btn-debts').classList.add('active');
-  }
+// Навигация
+function showPage(pageId){
+  document.querySelectorAll('.page').forEach(p=>p.style.display='none');
+  document.getElementById(pageId).style.display='block';
+  document.querySelectorAll('nav button').forEach(b=>b.classList.remove('active'));
+  if(pageId==='home') document.getElementById('btn-home').classList.add('active');
+  else document.getElementById('btn-debts').classList.add('active');
+}
 
-  // ======= Главная страница =======
-  const LIFE_MONTH = 25000;
-  const DEBT_MONTH = 15000;
-  const DAYS = 30;
-  const SAVE_PERCENT = 0.3;
+// Дата
+function setTodayDate(){ document.getElementById('today-date').innerText = new Date().toLocaleDateString(); }
+setTodayDate();
 
-  function saveDay() {
-    const hours = Number(document.getElementById('hours').value);
-    const income = Number(document.getElementById('income').value);
-    if(!income || income<0) return alert("Введите корректный доход");
-    const lifeDay = LIFE_MONTH/DAYS;
-    const debtDay = DEBT_MONTH/DAYS;
-    const rest = income-lifeDay-debtDay;
-    const savings = rest>0 ? Math.round(rest*SAVE_PERCENT):0;
-    const free = rest>0 ? Math.round(rest*(1-SAVE_PERCENT)):0;
+// Долги
+let debts = JSON.parse(localStorage.getItem('debts'))||[];
+function saveDebts(){ localStorage.setItem('debts',JSON.stringify(debts)); }
+function renderDebts(){
+  const list = document.getElementById('debts-list'); list.innerHTML=''; let total=0;
+  debts.forEach((d,i)=>{
+    total+=Number(d.monthly);
+    const div=document.createElement('div'); div.className='debt-item';
+    div.innerHTML=`<span>${d.name}: ${d.total} ₽ (мес. ${d.monthly} ₽) | Платёж: ${d.date || '-'}</span>
+      <div><button class="edit-btn" onclick="editDebt(${i})">✏️</button><button class="delete-btn" onclick="deleteDebt(${i})">🗑️</button></div>`;
+    list.appendChild(div);
+  });
+  document.getElementById('debts-total').innerText = total+' ₽';
+}
+function addDebt(){
+  const name=document.getElementById('debt-name').value;
+  const total=Number(document.getElementById('debt-total').value);
+  const monthly=Number(document.getElementById('debt-monthly').value);
+  const date=document.getElementById('debt-date').value;
+  if(!name||!total||!monthly) return alert("Заполните все поля");
+  debts.push({name,total,monthly,date}); saveDebts(); renderDebts();
+  document.getElementById('debt-name').value=''; document.getElementById('debt-total').value=''; document.getElementById('debt-monthly').value=''; document.getElementById('debt-date').value='';
+}
+function deleteDebt(i){ debts.splice(i,1); saveDebts(); renderDebts(); }
+function editDebt(i){
+  const d=debts[i];
+  const newName=prompt("Название долга:",d.name);
+  const newTotal=prompt("Общая сумма:",d.total);
+  const newMonthly=prompt("Ежемесячный платёж:",d.monthly);
+  const newDate=prompt("Дата платежа (YYYY-MM-DD):",d.date||'');
+  if(newName&&newTotal&&newMonthly){ debts[i]={name:newName,total:Number(newTotal),monthly:Number(newMonthly),date:newDate}; saveDebts(); renderDebts(); }
+}
 
-    let text = `
-      💰 Заработал: <span>${income} ₽</span><br>
-      🏠 На жизнь: <span>${Math.round(lifeDay)} ₽</span><br>
-      💳 Долги: <span>${Math.round(debtDay)} ₽</span><br>
-    `;
-    if(rest>0){
-      text += `📈 Можно отложить: <span class="savings">${savings} ₽</span><br>
-               🟢 Свободно: <span class="free">${free} ₽</span>`;
-    } else {
-      text += `<span class="warning">Остаток отрицательный, сегодня не откладываем</span>`;
+// Главная
+const LIFE_MONTH = 25000; const SAVE_PERCENT=0.3;
+let todayData = JSON.parse(localStorage.getItem('todayData'))||[];
+function saveDay(){
+  const hours=Number(document.getElementById('hours').value); const income=Number(document.getElementById('income').value);
+  if(!income||income<0) return alert("Введите корректный доход");
+  const debtSum = debts.reduce((a,d)=>a+Number(d.monthly),0);
+  const rest = income-LIFE_MONTH/30 - debtSum;
+  const savings = rest>0?Math.round(rest*SAVE_PERCENT):0;
+  const free = rest>0?Math.round(rest*(1-SAVE_PERCENT)):0;
+  const today = new Date().toLocaleDateString();
+  todayData.push({date:today,income,hours,savings,free}); localStorage.setItem('todayData',JSON.stringify(todayData));
+  renderToday(); renderChart();
+}
+function renderToday(){
+  const output=document.getElementById('output');
+  if(!todayData.length){ output.innerHTML="Введите данные и нажмите «Сохранить день»."; return; }
+  const last=todayData[todayData.length-1];
+  const debtSum = debts.reduce((a,d)=>a+Number(d.monthly),0);
+  const rest = last.income-LIFE_MONTH/30 - debtSum;
+  const savings = rest>0?Math.round(rest*SAVE_PERCENT):0;
+  const free = rest>0?Math.round(rest*(1-SAVE_PERCENT)):0;
+  let text=`💰 Заработал: <span>${last.income} ₽</span><br>🏠 На жизнь: <span>${Math.round(LIFE_MONTH/30)} ₽</span><br>💳 Долги: <span>${debtSum} ₽</span><br>`;
+  if(rest>0){ text+=`📈 Можно отложить: <span class="savings">${savings} ₽</span><br>🟢 Свободно: <span class="free">${free} ₽</span>`; }
+  else{text+=`<span class="warning">Остаток отрицательный, сегодня не откладываем</span>`;}
+  output.innerHTML=text;
+}
+function deleteTodayData(){
+  if(!todayData.length) return alert("Нет данных для удаления");
+  if(confirm("Удалить последний введённый день?")){ todayData.pop(); localStorage.setItem('todayData',JSON.stringify(todayData)); renderToday(); renderChart(); }
+}
+// График
+let chart;
+function renderChart(){
+  const ctx=document.getElementById('incomeChart').getContext('2d');
+  const labels = todayData.map(d=>d.date);
+  const dataSavings = todayData.map(d=>{
+    const debtSum = debts.reduce((a,debt)=>a+Number(debt.monthly),0);
+    const rest = d.income - LIFE_MONTH/30 - debtSum; return rest>0?Math.round(rest*SAVE_PERCENT):0;
+  });
+  const dataUsed = todayData.map(d=>{
+    const debtSum = debts.reduce((a,debt)=>a+Number(debt.monthly),0);
+    const rest = d.income - LIFE_MONTH/30 - debtSum; return d.income - (rest>0?Math.round(rest*SAVE_PERCENT):0);
+  });
+  if(chart) chart.destroy();
+  chart=new Chart(ctx,{
+    type:'bar',
+    data:{labels,datasets:[
+      {label:'Свободно для накоплений', data:dataSavings, backgroundColor:'rgba(76,175,80,0.7)'},
+      {label:'Расходы (жизнь + долги)', data:dataUsed, backgroundColor:'rgba(158,158,158,0.7)'}
+    ]},
+    options:{
+      responsive:true,
+      plugins:{legend:{position:'top'}, tooltip:{callbacks:{label:function(context){return context.dataset.label==='Свободно для накоплений'? 'Накопления: '+context.raw+' ₽':'Расходы: '+context.raw+' ₽';}}}},
+      scales:{y:{beginAtZero:true}}
     }
-    document.getElementById('output').innerHTML=text;
-  }
-
-  // ======= Долги =======
-  let debts = [];
-
-  function renderDebts() {
-    const list = document.getElementById('debts-list');
-    list.innerHTML='';
-    let total = 0;
-    debts.forEach((d,i)=>{
-      total += Number(d.total);
-      const div = document.createElement('div');
-      div.className='debt-item';
-      div.innerHTML = `
-        <span>${d.name}: ${d.total} ₽ (мес. ${d.monthly} ₽)</span>
-        <div>
-          <button class="edit-btn" onclick="editDebt(${i})">✏️</button>
-          <button class="delete-btn" onclick="deleteDebt(${i})">🗑️</button>
-        </div>
-      `;
-      list.appendChild(div);
-    });
-    document.getElementById('debts-total').innerText = total+' ₽';
-  }
-
-  function addDebt() {
-    const name = document.getElementById('debt-name').value;
-    const total = Number(document.getElementById('debt-total').value);
-    const monthly = Number(document.getElementById('debt-monthly').value);
-    if(!name || !total || !monthly) return alert("Заполните все поля");
-    debts.push({name,total,monthly});
-    renderDebts();
-    document.getElementById('debt-name').value='';
-    document.getElementById('debt-total').value='';
-    document.getElementById('debt-monthly').value='';
-  }
-
-  function deleteDebt(index){
-    debts.splice(index,1);
-    renderDebts();
-  }
-
-  function editDebt(index){
-    const d = debts[index];
-    const newName = prompt("Название долга:", d.name);
-    const newTotal = prompt("Общая сумма:", d.total);
-    const newMonthly = prompt("Ежемесячный платёж:", d.monthly);
-    if(newName && newTotal && newMonthly){
-      debts[index]={name:newName,total:Number(newTotal),monthly:Number(newMonthly)};
-      renderDebts();
-    }
-  }
+  });
+}
+// Инициализация
+renderDebts(); renderToday(); renderChart();
 </script>
 </body>
 </html>
