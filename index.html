@@ -76,8 +76,7 @@ nav button.active { background: rgba(255,255,255,0.35); }
 
 /* ===== Результаты ===== */
 .result span.savings { color:#007BFF;font-weight:600; }
-.result span.free { color:#4CAF50;font-weight:600; }
-.result span.warning { color:#E53935;font-weight:600; }
+.result span.life { color:#FFC107;font-weight:600; }
 
 @media(max-width:400px){
   .debt-item{font-size:14px;}
@@ -159,7 +158,7 @@ setToday();
 // ===== LocalStorage =====
 let debts = JSON.parse(localStorage.getItem('debts'))||[];
 let todayData = JSON.parse(localStorage.getItem('todayData'))||[];
-let settings = JSON.parse(localStorage.getItem('settings'))||{lifeMonth:25000,bgColor:'#e0e5ec',btnColor:'#4caf50'};
+let settings = JSON.parse(localStorage.getItem('settings'))||{lifeMonth:25000,bgColor:'#e0e5ec',btnColor:'#4caf50',savePercent:0.3};
 
 // ===== Настройки =====
 function saveSettings(){
@@ -224,16 +223,28 @@ function getLifePerDay(){
 }
 
 function saveDay(){
-  const income=Number(document.getElementById('income').value); if(!income||income<0) return alert("Введите доход!");
-  const lifeDay=getLifePerDay();
+  const income=Number(document.getElementById('income').value); 
+  if(!income||income<0) return alert("Введите доход!");
+
   const debtSum = debts.reduce((a,d)=>a+Number(d.monthly),0);
   const leftDays = daysLeftInMonth();
   const dailyDebt=Math.round(debtSum/leftDays);
-  const rest=income-lifeDay-dailyDebt;
-  const savings=rest>0?Math.round(rest*0.3):0;
-  const free=rest>0?Math.round(rest*0.7):0;
+
+  const restAfterDebt = income - dailyDebt;
+  const lifeMinPerDay = getLifePerDay();
+  let savings=0, life=0;
+
+  if(restAfterDebt <= lifeMinPerDay){
+    life = restAfterDebt;
+    savings = 0;
+  } else {
+    // максимально возможные накопления, чтобы не уходить ниже минимальной жизни
+    savings = Math.min(Math.round(restAfterDebt * settings.savePercent), restAfterDebt - lifeMinPerDay);
+    life = restAfterDebt - savings;
+  }
+
   const today=new Date().toLocaleDateString();
-  todayData.push({date:today,income,life:lifeDay,dailyDebt,savings,free});
+  todayData.push({date:today,income,life,dailyDebt,savings});
   localStorage.setItem('todayData',JSON.stringify(todayData));
   renderToday(); renderChart();
 }
@@ -244,10 +255,9 @@ function renderToday(){
   const last=todayData[todayData.length-1];
   output.innerHTML=`
     💰 Заработал: ${last.income} ₽<br>
-    🏠 На жизнь: ${last.life} ₽<br>
     💳 На обязательный платёж: ${last.dailyDebt} ₽<br>
-    📈 На накопления: <span class="savings">${last.savings} ₽</span><br>
-    🟢 Свободно: <span class="free">${last.free} ₽</span>
+    🏠 На жизнь: <span class="life">${last.life} ₽</span><br>
+    📈 На накопления: <span class="savings">${last.savings} ₽</span>
   `;
 }
 
@@ -264,15 +274,13 @@ function renderChart(){
   const dataLife=todayData.map(d=>d.life);
   const dataDebt=todayData.map(d=>d.dailyDebt);
   const dataSavings=todayData.map(d=>d.savings);
-  const dataFree=todayData.map(d=>d.free);
   if(chart) chart.destroy();
   chart=new Chart(ctx,{
     type:'bar',
     data:{labels,datasets:[
       {label:'Жизнь', data:dataLife, backgroundColor:'rgba(255,193,7,0.7)'},
       {label:'Обязательный платеж', data:dataDebt, backgroundColor:'rgba(244,67,54,0.7)'},
-      {label:'Накопления', data:dataSavings, backgroundColor:'rgba(33,150,243,0.7)'},
-      {label:'Свободно', data:dataFree, backgroundColor:'rgba(76,175,80,0.7)'}
+      {label:'Накопления', data:dataSavings, backgroundColor:'rgba(33,150,243,0.7)'}
     ]},
     options:{responsive:true,plugins:{legend:{position:'top'}},scales:{y:{beginAtZero:true}}}
   });
